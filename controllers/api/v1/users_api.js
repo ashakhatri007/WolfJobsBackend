@@ -1,10 +1,33 @@
 const User = require("../../../models/user");
 const jwt = require("jsonwebtoken");
 const Food = require("../../../models/food");
-const History = require('../../../models/history');
-const Job = require('../../../models/job');
+const History = require("../../../models/history");
+const Job = require("../../../models/job");
+const Application = require("../../../models/application");
 
+module.exports.index = async function (req, res) {
+  let jobs = await Job.find({}).sort("-createdAt");
 
+  //Whenever we want to send back JSON data
+
+  return res.json(200, {
+    message: "List of jobs",
+
+    jobs: jobs,
+  });
+};
+
+module.exports.fetchApplication = async function (req, res) {
+  let application = await Application.find({}).sort("-createdAt");
+
+  //Whenever we want to send back JSON data
+
+  return res.json(200, {
+    message: "List of Applications",
+
+    application: application,
+  });
+};
 
 module.exports.createSession = async function (req, res) {
   try {
@@ -32,32 +55,24 @@ module.exports.createSession = async function (req, res) {
   }
 };
 
-
 module.exports.createHistory = async function (req, res) {
   try {
-  
-        let history = await History.create({
-          date: req.body.date,
-          caloriesgain: req.body.total,
-          caloriesburn: req.body.burnout,
-          user:req.body.id
+    let history = await History.create({
+      date: req.body.date,
+      caloriesgain: req.body.total,
+      caloriesburn: req.body.burnout,
+      user: req.body.id,
+    });
 
-        });
-          
+    return res.json(200, {
+      message: "History Created Successfully",
 
-          return res.json(200, {
-            message: "History Created Successfully",
-
-            data: {
-              
-              history:history,
-            },
-            success: true,
-          });
-        ;
-      }
-    
-   catch (err) {
+      data: {
+        history: history,
+      },
+      success: true,
+    });
+  } catch (err) {
     console.log(err);
 
     return res.json(500, {
@@ -65,8 +80,6 @@ module.exports.createHistory = async function (req, res) {
     });
   }
 };
-
-
 
 module.exports.signUp = async function (req, res) {
   try {
@@ -144,11 +157,9 @@ module.exports.editProfile = async function (req, res) {
       user.phonenumber = req.body.phonenumber;
       user.hours = req.body.hours;
       user.gender = req.body.gender;
-      user.dob = req.body.dob
-      check = req.body.skills
-      user.skills = check.split(',');
-
-
+      user.dob = req.body.dob;
+      check = req.body.skills;
+      user.skills = check.split(",");
 
       user.save();
 
@@ -182,8 +193,8 @@ module.exports.editProfile = async function (req, res) {
 module.exports.searchUser = async function (req, res) {
   try {
     var regex = new RegExp(req.params.name, "i");
-    
-    let users = await Food.find({ Food: regex });
+
+    let users = await Job.find({ name: regex });
 
     return res.json(200, {
       message: "The list of Searched Users",
@@ -207,7 +218,10 @@ module.exports.searchUser = async function (req, res) {
 
 module.exports.getHistory = async function (req, res) {
   try {
-    let history = await History.findOne({user:req.query.id,date:req.query.date});
+    let history = await History.findOne({
+      user: req.query.id,
+      date: req.query.date,
+    });
 
     return res.json(200, {
       message: "The User Profile",
@@ -229,20 +243,18 @@ module.exports.getHistory = async function (req, res) {
   }
 };
 
-
 module.exports.createJob = async function (req, res) {
   let user = await User.findOne({ _id: req.body.id });
-  check = req.body.skills
+  check = req.body.skills;
   try {
     let job = await Job.create({
       name: req.body.name,
-      managerid: user._id,
-      skills:check.split(','),
-      location:req.body.location,
-      description:req.body.description,
-      pay:req.body.pay,
-      schedule:req.body.schedule,
-
+      managerid: req.body.id,
+      // skills: check.split(","),
+      location: req.body.location,
+      description: req.body.description,
+      pay: req.body.pay,
+      schedule: req.body.schedule,
     });
 
     return res.json(200, {
@@ -262,4 +274,130 @@ module.exports.createJob = async function (req, res) {
   }
 };
 
+module.exports.createApplication = async function (req, res) {
+  // let user = await User.findOne({ _id: req.body.id });
+  check = req.body.skills;
 
+  try {
+    let application = await Application.create({
+      // applicantemail: req.body.applicantemail,
+      applicantid: req.body.applicantId,
+      applicantname: req.body.applicantname,
+      address: req.body.address,
+      phonenumber: req.body.phonenumber,
+      hours: req.body.hours,
+      dob: req.body.dob,
+      gender: req.body.gender,
+      skills: check.split(","),
+      jobname: req.body.jobname,
+      jobid: req.body.jobId,
+      manageremail: req.body.managerId,
+    });
+
+    return res.json(200, {
+      data: {
+        application: application,
+        //token: jwt.sign(user.toJSON(), env.jwt_secret, { expiresIn: "100000" })
+      },
+      message: "Job Created!!",
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.json(500, {
+      message: "NOT CREATED",
+    });
+  }
+};
+
+module.exports.acceptApplication = async function (req, res) {
+  try {
+    let application = await Application.findById(req.body.applicationId);
+
+    application.status = "1";
+
+    application.save();
+
+    return res.json(200, {
+      message: "Application is updated Successfully",
+
+      data: {
+        //user.JSON() part gets encrypted
+
+        // token: jwt.sign(user.toJSON(), env.jwt_secret, {
+        //   expiresIn: "100000",
+        // }),
+        application,
+      },
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.json(500, {
+      message: "Internal Server Error",
+    });
+  }
+};
+
+module.exports.rejectApplication = async function (req, res) {
+  try {
+    let application = await Application.findById(req.body.applicationId);
+
+    application.status = "2";
+
+    application.save();
+
+    return res.json(200, {
+      message: "Application is updated Successfully",
+
+      data: {
+        //user.JSON() part gets encrypted
+
+        // token: jwt.sign(user.toJSON(), env.jwt_secret, {
+        //   expiresIn: "100000",
+        // }),
+        application,
+      },
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.json(500, {
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+module.exports.closeJob = async function (req, res) {
+  try {
+    let job = await Job.findById(req.body.jobId);
+
+    job.status = "1";
+
+    job.save();
+
+    return res.json(200, {
+      message: "Job is updated Successfully",
+
+      data: {
+        //user.JSON() part gets encrypted
+
+        // token: jwt.sign(user.toJSON(), env.jwt_secret, {
+        //   expiresIn: "100000",
+        // }),
+        job,
+      },
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.json(500, {
+      message: "Internal Server Error",
+    });
+  }
+};
