@@ -16,8 +16,8 @@ module.exports.createSession = async function (req, res) {
         message: "Invalid username or password",
       });
     }
-
-    return res.json(200, {
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.json(200, {   
       message: "Sign In Successful, here is your token, please keep it safe",
       data: {
         token: jwt.sign(user.toJSON(), "caloriesapp", { expiresIn: "100000" }),
@@ -45,7 +45,7 @@ module.exports.createHistory = async function (req, res) {
 
         });
           
-
+        res.set('Access-Control-Allow-Origin', '*');
           return res.json(200, {
             message: "History Created Successfully",
 
@@ -79,6 +79,7 @@ module.exports.signUp = async function (req, res) {
 
     User.findOne({ email: req.body.email }, function (err, user) {
       if (user) {
+        res.set('Access-Control-Allow-Origin', '*');
         return res.json(200, {
           message: "Sign Up Successful, here is your token, plz keep it safe",
 
@@ -103,7 +104,7 @@ module.exports.signUp = async function (req, res) {
           }
 
           // let userr = User.findOne({ email: req.body.email });
-
+          res.set('Access-Control-Allow-Origin', '*');
           return res.json(200, {
             message: "Sign Up Successful, here is your token, plz keep it safe",
 
@@ -152,7 +153,7 @@ module.exports.editProfile = async function (req, res) {
 
 
       user.save();
-
+      res.set('Access-Control-Allow-Origin', '*');
       return res.json(200, {
         message: "User is updated Successfully",
 
@@ -184,7 +185,7 @@ module.exports.searchUser = async function (req, res) {
     var regex = new RegExp(req.params.name, "i");
 
     let users = await Job.find({ name: regex });
-
+    res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       message: "The list of Searched Users",
 
@@ -209,7 +210,7 @@ module.exports.searchUser = async function (req, res) {
 module.exports.getHistory = async function (req, res) {
   try {
     let history = await History.findOne({user:req.query.id,date:req.query.date});
-
+    res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       message: "The User Profile",
 
@@ -245,7 +246,7 @@ module.exports.createJob = async function (req, res) {
       schedule:req.body.schedule,
 
     });
-
+    res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       data: {
         job: job,
@@ -267,7 +268,7 @@ module.exports.index = async function (req, res) {
   let jobs = await Job.find({}).sort("-createdAt");
 
   //Whenever we want to send back JSON data
-
+  res.set('Access-Control-Allow-Origin', '*');
   return res.json(200, {
     message: "List of jobs",
 
@@ -279,7 +280,7 @@ module.exports.fetchApplication = async function (req, res) {
   let application = await Application.find({}).sort("-createdAt");
 
   //Whenever we want to send back JSON data
-
+  res.set('Access-Control-Allow-Origin', '*');
   return res.json(200, {
     message: "List of Applications",
 
@@ -306,7 +307,7 @@ module.exports.createApplication = async function (req, res) {
       jobid: req.body.jobId,
       manageremail: req.body.managerId,
     });
-
+    res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       data: {
         application: application,
@@ -331,7 +332,7 @@ module.exports.acceptApplication = async function (req, res) {
     application.status = "1";
 
     application.save();
-
+    res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       message: "Application is updated Successfully",
 
@@ -363,7 +364,7 @@ module.exports.rejectApplication = async function (req, res) {
     application.status = "2";
 
     application.save();
-
+    res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       message: "Application is updated Successfully",
 
@@ -394,7 +395,7 @@ module.exports.closeJob = async function (req, res) {
     job.status = "1";
 
     job.save();
-
+    res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       message: "Job is updated Successfully",
 
