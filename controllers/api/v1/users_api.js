@@ -15,7 +15,7 @@ require('dotenv').config();
 module.exports.createSession = async function (req, res) {
   try {
     let user = await User.findOne({ email: req.body.email });
-
+    res.set('Access-Control-Allow-Origin', '*');
     if (!user || user.password != req.body.password) {
       return res.json(422, {
         message: "Invalid username or password",
@@ -139,6 +139,30 @@ module.exports.signUp = async function (req, res) {
   }
 };
 
+module.exports.getProfile = async function (req, res) {
+  try {
+    let user = await User.findById(req.params.id);
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.json(200, {
+      message: "The User info is",
+
+      data: {
+        //user.JSON() part gets encrypted
+
+        //token: jwt.sign(user.toJSON(), env.jwt_secret, { expiresIn: "100000" }),
+        user: user,
+      },
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.json(500, {
+      message: "Internal Server Error",
+    });
+  }
+};
+
 module.exports.editProfile = async function (req, res) {
   if (req.body.password == req.body.confirm_password) {
     try {
@@ -154,9 +178,6 @@ module.exports.editProfile = async function (req, res) {
       user.dob = req.body.dob
       check = req.body.skills
       user.skills = check.split(' ');
-
-
-
       user.save();
       res.set('Access-Control-Allow-Origin', '*');
       return res.json(200, {
@@ -180,8 +201,8 @@ module.exports.editProfile = async function (req, res) {
       });
     }
   } else {
-    return res.json(422, {
-      message: "Passwords donot match",
+    return res.json(400, {
+      message: "Bad Request",
     });
   }
 };
