@@ -10,13 +10,13 @@ const Application = require('../../../models/application');
 module.exports.createSession = async function (req, res) {
   try {
     let user = await User.findOne({ email: req.body.email });
-
+    res.set('Access-Control-Allow-Origin', '*');
     if (!user || user.password != req.body.password) {
       return res.json(422, {
         message: "Invalid username or password",
       });
     }
-    res.set('Access-Control-Allow-Origin', '*');
+   
     return res.json(200, {   
       message: "Sign In Successful, here is your token, please keep it safe",
       data: {
