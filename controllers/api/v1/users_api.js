@@ -4,6 +4,11 @@ const Food = require("../../../models/food");
 const History = require('../../../models/history');
 const Job = require('../../../models/job');
 const Application = require('../../../models/application');
+const AuthOtp = require('../../../models/authOtp')
+
+const nodemailer = require('nodemailer')
+
+require('dotenv').config();
 
 
 
@@ -16,8 +21,8 @@ module.exports.createSession = async function (req, res) {
         message: "Invalid username or password",
       });
     }
-   
-    return res.json(200, {   
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.json(200, {
       message: "Sign In Successful, here is your token, please keep it safe",
       data: {
         token: jwt.sign(user.toJSON(), "caloriesapp", { expiresIn: "100000" }),
@@ -36,29 +41,29 @@ module.exports.createSession = async function (req, res) {
 
 module.exports.createHistory = async function (req, res) {
   try {
-  
-        let history = await History.create({
-          date: req.body.date,
-          caloriesgain: req.body.total,
-          caloriesburn: req.body.burnout,
-          user:req.body.id
 
-        });
-          
-        res.set('Access-Control-Allow-Origin', '*');
-          return res.json(200, {
-            message: "History Created Successfully",
+    let history = await History.create({
+      date: req.body.date,
+      caloriesgain: req.body.total,
+      caloriesburn: req.body.burnout,
+      user: req.body.id
 
-            data: {
-              
-              history:history,
-            },
-            success: true,
-          });
-        ;
-      }
-    
-   catch (err) {
+    });
+
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.json(200, {
+      message: "History Created Successfully",
+
+      data: {
+
+        history: history,
+      },
+      success: true,
+    });
+    ;
+  }
+
+  catch (err) {
     console.log(err);
 
     return res.json(500, {
@@ -230,7 +235,7 @@ module.exports.searchUser = async function (req, res) {
 
 module.exports.getHistory = async function (req, res) {
   try {
-    let history = await History.findOne({user:req.query.id,date:req.query.date});
+    let history = await History.findOne({ user: req.query.id, date: req.query.date });
     res.set('Access-Control-Allow-Origin', '*');
     return res.json(200, {
       message: "The User Profile",
@@ -260,11 +265,11 @@ module.exports.createJob = async function (req, res) {
     let job = await Job.create({
       name: req.body.name,
       managerid: user._id,
-      skills:check.split(' '),
-      location:req.body.location,
-      description:req.body.description,
-      pay:req.body.pay,
-      schedule:req.body.schedule,
+      skills: check.split(' '),
+      location: req.body.location,
+      description: req.body.description,
+      pay: req.body.pay,
+      schedule: req.body.schedule,
 
     });
     res.set('Access-Control-Allow-Origin', '*');
@@ -314,6 +319,21 @@ module.exports.createApplication = async function (req, res) {
   check = req.body.skills;
 
   try {
+
+    const existingApplication = await Application.findOne({
+      applicantid: req.body.applicantId,
+      jobid: req.body.jobId,
+    });
+
+    if (existingApplication) {
+      res.set('Access-Control-Allow-Origin', '*');
+      return res.json(400, {
+        message: "You have already applied for the job",
+        error: true
+      });
+    }
+
+
     let application = await Application.create({
       // applicantemail: req.body.applicantemail,
       applicantid: req.body.applicantId,
@@ -372,7 +392,7 @@ module.exports.acceptApplication = async function (req, res) {
 
     return res.json(500, {
       message: "Internal Server Error",
-      
+
     });
   }
 };
@@ -438,3 +458,84 @@ module.exports.closeJob = async function (req, res) {
     });
   }
 };
+
+function getTransport() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
+    },
+  });
+}
+
+// Generate OTP ans send email to user
+module.exports.generateOtp = async function (req, res) {
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  try {
+    let authOtp = await AuthOtp.create({
+      userId: req.body.userId,
+      otp: otp,
+    });
+
+    const { email } = await User.findById(req.body.userId);
+    // Send mail to user
+    const mailOptions = {
+      from: '"Job Portal" <' + process.env.EMAIL + '>', // sender address
+      to: email, // list of receivers
+      subject: "OTP", // Subject line
+      html: `<p>Your OTP is ${otp}</p>`, // plain text body
+    };
+
+    await getTransport().sendMail(mailOptions);
+
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.json(200, {
+      success: true,
+      message: "OTP is generated Successfully",
+    }
+    );
+
+  } catch (err) {
+    console.log(err);
+
+    return res.json(500, {
+      message: "Internal Server Error",
+    });
+  }
+};
+
+module.exports.verifyOtp = async function(req, res) {
+  try {
+    const authOtp = await AuthOtp.findOne({
+      userId: req.body.userId,
+      otp: req.body.otp,
+    });
+
+    if (!authOtp) {
+      return res.json(422, {
+        error: true,
+        message: "OTP is not correct",
+      });
+    }
+
+    authOtp.remove();
+
+    await User.updateOne(
+      { _id: req.body.userId },
+      { $set: { isVerified: true } }
+    );
+
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.json(200, {
+      success: true,
+      message: "OTP is verified Successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.json(500, {
+      message: "Internal Server Error",
+    });
+  }
+}

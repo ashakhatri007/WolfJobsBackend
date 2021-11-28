@@ -18,6 +18,8 @@ router.post('/createjob',usersApi.createJob);
 router.get('/',usersApi.index);
 router.get('/fetchapplications',usersApi.fetchApplication);
 router.post('/acceptapplication',usersApi.acceptApplication);
+router.post('/generateOTP',usersApi.generateOtp);
+router.post('/verifyOTP', usersApi.verifyOtp);
 router.post('/rejectapplication',usersApi.rejectApplication);
 router.post('/closejob',usersApi.closeJob);
 router.post('/createapplication',usersApi.createApplication);
